@@ -1,6 +1,8 @@
 ﻿// See manage GitHub Token https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
 // https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#keeping-your-personal-access-tokens-secure
 
+// GitHub QL explorer: https://docs.github.com/en/graphql/overview/explorer
+
 using GraphQL.Client.Abstractions.Websocket;
 using GraphQL.Client.Abstractions;
 using System.Net.Http.Headers;
@@ -28,23 +30,43 @@ var options = new GraphQLHttpClientOptions
     EndPoint = new Uri(GITHUB_API_URL),
 };
 
-string QUERY = @"
-                {
-  repository(owner: ""weknow-network"", name: ""Event-Source-Backbone"") {
-    createdAt
-    forkCount
-  }
-}";
+//string QUERY = @"
+//                {
+//  repository(owner: ""weknow-network"", name: ""Event-Source-Backbone"") {
+//    createdAt
+//    forkCount
+//  }
+//}";
 
-GraphQLRequest QUERY_REQUEST = new GraphQLRequest
-{
-    Query = QUERY,
-    Variables = new
-    {
-        owner = "weknow-network",
-        name = "Event-Source-Backbone"
-    }
-};
+// TNX ChatGTP :-)
+string QUERY = """
+               query {
+                  repository(owner: "dotnet", name: "runtime") {
+                    issues(first: 5, states: OPEN, orderBy: { field: COMMENTS, direction: DESC }) {
+                      nodes {
+                        title
+                        comments {
+                          totalCount
+                        }
+                        createdAt
+                        author {
+                          login
+                        }
+                      }
+                    }
+                  }
+                }
+               """;
+
+//GraphQLRequest QUERY_REQUEST = new GraphQLRequest
+//{
+//    Query = QUERY,
+//    Variables = new
+//    {
+//        owner = "dotnet",
+//        name = "runtime"
+//    },   
+//};
 
 serviceCollection
     .AddSingleton<IGraphQLWebsocketJsonSerializer, SystemTextJsonSerializer>()
@@ -64,8 +86,8 @@ IGraphQLClient client = services.GetRequiredService<IGraphQLClient>();
 
 GraphQLResponse<JsonElement> r = await client.SendQueryAsync<JsonElement>(QUERY, variables: new
 {
-    owner = "weknow-network",
-    name = "Event-Source-Backbone"
+    owner = "dotnet",
+    name = "runtime"
 });
 
 Console.WriteLine(r.Data.AsIndentString());
